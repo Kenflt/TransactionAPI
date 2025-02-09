@@ -18,6 +18,10 @@ namespace TransactionAPI.Controllers
         [HttpPost("submit-transaction")]
         public ActionResult<TransactionResponse> SubmitTransaction([FromBody] TransactionRequest request)
         {
+            if (request == null)
+            {
+                return BadRequest(new TransactionResponse { Result = 0, ResultMessage = "Invalid request." });
+            }
 
             var response = _transactionService.ProcessTransaction(request);
             return response.Result == 1 ? Ok(response) : BadRequest(response);
