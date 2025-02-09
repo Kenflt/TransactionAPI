@@ -5,7 +5,7 @@ using TransactionAPI.Services;
 namespace TransactionAPI.Controllers
 {
     [ApiController]
-    [Route("api/submittrxmessage")]
+    [Route("api/transaction")]
     public class TransactionController : ControllerBase
     {
         private readonly ITransactionService _transactionService;
@@ -15,27 +15,22 @@ namespace TransactionAPI.Controllers
             _transactionService = transactionService;
         }
 
-        [HttpPost]
+        [HttpPost("submit-transaction")]
         public ActionResult<TransactionResponse> SubmitTransaction([FromBody] TransactionRequest request)
         {
-            if (string.IsNullOrEmpty(request.PartnerRefNo))
-            {
-                return BadRequest(new TransactionResponse { Result = 0, ResultMessage = "PartnerRefNo is Required." });
-            }
-            if (request.TotalAmount <= 0)
-            {
-                return BadRequest(new TransactionResponse { Result = 0, ResultMessage = "Invalid Total Amount." });
-            }
+            if (IsExpired(request.Timestamp))
+                return BadRequest(new TransactionResponse { Result = 0, ResultMessage = "Expired. Provided timestamp exceed server time +-5min" });
 
             var response = _transactionService.ProcessTransaction(request);
-
-            if (response.Result == 0)
-            {
-                return BadRequest(response); // Ensure errors return BadRequest
-            }
-
-            return Ok(response);
+            return response.Result == 1 ? Ok(response) : BadRequest(response);
         }
 
+        private bool IsExpired(string timestamp)
+        {
+            if (!DateTime.TryParse(timestamp, out DateTime requestTime))
+                return true;
+
+            return Math.Abs((DateTime.UtcNow - requestTime).TotalSeconds) > 300;
+        }
     }
 }

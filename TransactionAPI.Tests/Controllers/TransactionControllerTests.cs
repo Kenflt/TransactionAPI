@@ -22,6 +22,15 @@ public class TransactionControllerTests
     }
 
     [Fact]
+    public void SubmitTransaction_ShouldReturnBadRequest_WhenRequestIsNull()
+    {
+        var result = _controller.SubmitTransaction(null);
+        var response = result.Result as BadRequestObjectResult;
+        Assert.NotNull(response);
+        Assert.Equal(400, response.StatusCode);
+    }
+
+    [Fact]
     public void SubmitTransaction_ShouldReturnSuccess_WhenValidRequest()
     {
         // Arrange
@@ -184,6 +193,67 @@ public class TransactionControllerTests
         Assert.Equal(expectedDiscount, responseBody.TotalDiscount);
         Assert.Equal(expectedFinalAmount, responseBody.FinalAmount);
         Assert.Equal("Transaction Successful", responseBody.ResultMessage);
+    }
+
+    [Theory]
+    [InlineData(19999, 0, 19999)]
+    [InlineData(20000, 1000, 19000)]
+    [InlineData(79999, 5599, 74399)]
+    [InlineData(80000, 8000, 72000)]
+    [InlineData(120000, 18000, 102000)]
+    public void SubmitTransaction_ShouldApplyDiscounts_Correctly(long totalAmount, long expectedDiscount, long expectedFinalAmount)
+    {
+        var request = new TransactionRequest
+        {
+            PartnerKey = "FAKEGOOGLE",
+            PartnerRefNo = "FG-00001",
+            PartnerPassword = "RkFLRVBBU1NXT1JEMTIzNA==",
+            TotalAmount = totalAmount,
+            Items = new List<ItemDetail> { new ItemDetail { PartnerItemRef = "i-00001", Name = "Item1", Qty = 1, UnitPrice = totalAmount } },
+            Sig = "validsignature"
+        };
+
+        _mockService.Setup(service => service.ProcessTransaction(request))
+            .Returns(new TransactionResponse { Result = 1, TotalAmount = totalAmount, TotalDiscount = expectedDiscount, FinalAmount = expectedFinalAmount, ResultMessage = "Transaction Successful" });
+
+        var result = _controller.SubmitTransaction(request);
+        var response = result.Result as OkObjectResult;
+        var responseBody = response?.Value as TransactionResponse;
+        Assert.NotNull(response);
+        Assert.Equal(200, response.StatusCode);
+        Assert.NotNull(responseBody);
+        Assert.Equal(expectedDiscount, responseBody.TotalDiscount);
+        Assert.Equal(expectedFinalAmount, responseBody.FinalAmount);
+    }
+
+    [Theory]
+    [InlineData(null, "Pen", 1, 1000, "PartnerItemRef is Required.")]
+    [InlineData("i-00001", null, 1, 1000, "Item Name is Required.")]
+    [InlineData("i-00001", "Pen", 0, 1000, "Quantity must be between 1 and 5.")]
+    [InlineData("i-00001", "Pen", 6, 1000, "Quantity must be between 1 and 5.")]
+    [InlineData("i-00001", "Pen", 1, -100, "UnitPrice must be a positive value.")]
+    public void SubmitTransaction_ShouldReturnBadRequest_ForInvalidItemDetails(string itemRef, string name, int qty, long price, string expectedMessage)
+    {
+        var request = new TransactionRequest
+        {
+            PartnerKey = "FAKEGOOGLE",
+            PartnerRefNo = "FG-00001",
+            PartnerPassword = "RkFLRVBBU1NXT1JEMTIzNA==",
+            TotalAmount = 1000,
+            Items = new List<ItemDetail> { new ItemDetail { PartnerItemRef = itemRef, Name = name, Qty = qty, UnitPrice = price } },
+            Sig = "validsignature"
+        };
+
+        _mockService.Setup(service => service.ProcessTransaction(request))
+            .Returns(new TransactionResponse { Result = 0, ResultMessage = expectedMessage });
+
+        var result = _controller.SubmitTransaction(request);
+        var response = result.Result as BadRequestObjectResult;
+        var responseBody = response?.Value as TransactionResponse;
+        Assert.NotNull(response);
+        Assert.Equal(400, response.StatusCode);
+        Assert.NotNull(responseBody);
+        Assert.Equal(expectedMessage, responseBody.ResultMessage);
     }
 
 }

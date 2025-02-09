@@ -33,6 +33,18 @@ namespace TransactionAPI.Services
             if (request.TotalAmount > 0 && (request.Items == null || request.Items.Count == 0))
                 return new TransactionResponse { Result = 0, ResultMessage = "Items List Cannot Be Empty." };
 
+            foreach (var item in request.Items)
+            {
+                if (string.IsNullOrEmpty(item.PartnerItemRef))
+                    return new TransactionResponse { Result = 0, ResultMessage = "PartnerItemRef is Required." };
+                if (string.IsNullOrEmpty(item.Name))
+                    return new TransactionResponse { Result = 0, ResultMessage = "Item Name is Required." };
+                if (item.Qty < 1 || item.Qty > 5)
+                    return new TransactionResponse { Result = 0, ResultMessage = "Quantity must be between 1 and 5." };
+                if (item.UnitPrice <= 0)
+                    return new TransactionResponse { Result = 0, ResultMessage = "UnitPrice must be a positive value." };
+            }
+
             long calculatedTotal = request.Items.Sum(item => item.Qty * item.UnitPrice);
 
             if (calculatedTotal != request.TotalAmount)
