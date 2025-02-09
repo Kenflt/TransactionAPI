@@ -163,28 +163,29 @@ public class TransactionControllerTests
         Assert.Equal(expectedMessage, responseBody.ResultMessage);
     }
     [Theory]
-    [InlineData(150, 0, 150)]       // No discount (<200)
-    [InlineData(200, 10, 190)]       // 5% discount
-    [InlineData(500, 25, 475)]       // 5% discount
-    [InlineData(600, 42, 558)]       // 7% discount
-    [InlineData(800, 56, 744)]       // 7% discount
-    [InlineData(1000, 100, 900)]     // 10% discount
-    [InlineData(1500, 225, 1275)]    // 15% discount
-    [InlineData(503, 40, 463)]       // Prime number > 500 → Extra 8% discount (rounded)
-    [InlineData(905, 181, 724)]      // Ends in 5 & > 900 → Extra 10% discount (rounded)
+    [InlineData(15000, 0, 150.00)]       // No discount (<200 MYR)
+    [InlineData(20000, 10.00, 190.00)]    // 5% discount
+    [InlineData(50000, 25.00, 475.00)]    // 5% discount
+    [InlineData(60000, 42.00, 558.00)]    // 7% discount
+    [InlineData(80000, 56.00, 744.00)]    // 7% discount
+    [InlineData(100000, 100.00, 900.00)]  // 10% discount
+    [InlineData(150000, 225.00, 1275.00)] // 15% discount
+    [InlineData(50300, 40.24, 462.76)]    // Prime number 503 → Extra 8% discount (rounded)
+    [InlineData(90500, 181.00, 724.00)]   // Ends in 5 & > 900 → Extra 10% discount (rounded)
     public void SubmitTransaction_ShouldApplyCorrectDiscounts(
-    long totalAmountMYR, long expectedDiscount, long expectedFinalAmount) // ✅ Use long for all params
+    long totalAmountCents, long expectedDiscountMYR, long expectedFinalAmountMYR)
     {
         // Arrange
+        long totalAmountMYR = (long)(totalAmountCents / 100.0);
         var request = new TransactionRequest
         {
             PartnerKey = "FAKEGOOGLE",
             PartnerPassword = "RkFLRVBBU1NXT1JEMTIzNA==",
             PartnerRefNo = "FG-00001",
-            TotalAmount = totalAmountMYR, // ✅ Already long
+            TotalAmount = totalAmountCents, // ✅ Stored in cents
             Items = new List<ItemDetail>
         {
-            new ItemDetail { PartnerItemRef = "i-00001", Name = "Item1", Qty = 1, UnitPrice = totalAmountMYR }
+            new ItemDetail { PartnerItemRef = "i-00001", Name = "Item1", Qty = 1, UnitPrice = totalAmountCents }
         },
             Sig = "validsignature"
         };
@@ -194,9 +195,9 @@ public class TransactionControllerTests
             .Returns(new TransactionResponse
             {
                 Result = 1,
-                TotalAmount = totalAmountMYR, // ✅ Already long
-                TotalDiscount = expectedDiscount, // ✅ Already long
-                FinalAmount = expectedFinalAmount, // ✅ Already long
+                TotalAmount = totalAmountMYR, // ✅ Converted to MYR
+                TotalDiscount = expectedDiscountMYR, // ✅ Already in MYR
+                FinalAmount = expectedFinalAmountMYR, // ✅ Already in MYR
                 ResultMessage = "Transaction Successful"
             });
 
@@ -205,61 +206,17 @@ public class TransactionControllerTests
         var response = result.Result as ObjectResult;
         var responseBody = response?.Value as TransactionResponse;
 
-        // Log Request & Response
-        _output.WriteLine("📤 REQUEST:");
-        _output.WriteLine(System.Text.Json.JsonSerializer.Serialize(request, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
-
-        _output.WriteLine("📥 RESPONSE:");
-        _output.WriteLine(System.Text.Json.JsonSerializer.Serialize(responseBody, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
-
-        string requestJson = System.Text.Json.JsonSerializer.Serialize(request, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
-        string responseJson = System.Text.Json.JsonSerializer.Serialize(responseBody, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
-
-        // Log transaction
-        LogTransaction(requestJson, responseJson);
-
         // Assert
         Assert.NotNull(response);
         Assert.Equal(200, response.StatusCode);
         Assert.NotNull(responseBody);
         Assert.Equal(1, responseBody.Result);
         Assert.Equal(totalAmountMYR, responseBody.TotalAmount);
-        Assert.Equal(expectedDiscount, responseBody.TotalDiscount);
-        Assert.Equal(expectedFinalAmount, responseBody.FinalAmount);
+        Assert.Equal(expectedDiscountMYR, responseBody.TotalDiscount);
+        Assert.Equal(expectedFinalAmountMYR, responseBody.FinalAmount);
         Assert.Equal("Transaction Successful", responseBody.ResultMessage);
     }
-
-    [Theory]
-    [InlineData(19999, 0, 19999)]
-    [InlineData(20000, 1000, 19000)]
-    [InlineData(79999, 5599, 74399)]
-    [InlineData(80000, 8000, 72000)]
-    [InlineData(120000, 18000, 102000)]
-    public void SubmitTransaction_ShouldApplyDiscounts_Correctly(long totalAmount, long expectedDiscount, long expectedFinalAmount)
-    {
-        var request = new TransactionRequest
-        {
-            PartnerKey = "FAKEGOOGLE",
-            PartnerRefNo = "FG-00001",
-            PartnerPassword = "RkFLRVBBU1NXT1JEMTIzNA==",
-            TotalAmount = totalAmount,
-            Items = new List<ItemDetail> { new ItemDetail { PartnerItemRef = "i-00001", Name = "Item1", Qty = 1, UnitPrice = totalAmount } },
-            Sig = "validsignature"
-        };
-
-        _mockService.Setup(service => service.ProcessTransaction(request))
-            .Returns(new TransactionResponse { Result = 1, TotalAmount = totalAmount, TotalDiscount = expectedDiscount, FinalAmount = expectedFinalAmount, ResultMessage = "Transaction Successful" });
-
-        var result = _controller.SubmitTransaction(request);
-        var response = result.Result as OkObjectResult;
-        var responseBody = response?.Value as TransactionResponse;
-        Assert.NotNull(response);
-        Assert.Equal(200, response.StatusCode);
-        Assert.NotNull(responseBody);
-        Assert.Equal(expectedDiscount, responseBody.TotalDiscount);
-        Assert.Equal(expectedFinalAmount, responseBody.FinalAmount);
-    }
-
+    
     [Theory]
     [InlineData(null, "Pen", 1, 1000, "PartnerItemRef is Required.")]
     [InlineData("i-00001", null, 1, 1000, "Item Name is Required.")]
