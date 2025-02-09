@@ -250,6 +250,14 @@ public class TransactionControllerTests
         var result = _controller.SubmitTransaction(request);
         var response = result.Result as BadRequestObjectResult;
         var responseBody = response?.Value as TransactionResponse;
+
+        // Log Request & Response
+        _output.WriteLine("📤 REQUEST:");
+        _output.WriteLine(System.Text.Json.JsonSerializer.Serialize(request, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+
+        _output.WriteLine("📥 RESPONSE:");
+        _output.WriteLine(System.Text.Json.JsonSerializer.Serialize(responseBody, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+
         Assert.NotNull(response);
         Assert.Equal(400, response.StatusCode);
         Assert.NotNull(responseBody);

@@ -18,8 +18,6 @@ namespace TransactionAPI.Controllers
         [HttpPost("submit-transaction")]
         public ActionResult<TransactionResponse> SubmitTransaction([FromBody] TransactionRequest request)
         {
-            if (IsExpired(request.Timestamp))
-                return BadRequest(new TransactionResponse { Result = 0, ResultMessage = "Expired. Provided timestamp exceed server time +-5min" });
 
             var response = _transactionService.ProcessTransaction(request);
             return response.Result == 1 ? Ok(response) : BadRequest(response);
