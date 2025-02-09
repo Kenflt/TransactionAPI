@@ -7,18 +7,34 @@ using Xunit;
 using Xunit.Abstractions; // For logging test outputs
 using System.Collections.Generic;
 using System.Linq;
+using log4net;
+using log4net.Config;
+using System.Reflection;
 
 public class TransactionControllerTests
 {
     private readonly ITestOutputHelper _output;
     private readonly Mock<ITransactionService> _mockService;
+    private readonly ILog _logger;
     private readonly TransactionController _controller;
 
     public TransactionControllerTests(ITestOutputHelper output)
     {
         _output = output;
         _mockService = new Mock<ITransactionService>();
+
+        // Configure log4net
+        var logRepository = LogManager.GetRepository(Assembly.GetEntryAssembly());
+        XmlConfigurator.Configure(logRepository, new FileInfo("log4net.config"));
+        _logger = LogManager.GetLogger(typeof(TransactionControllerTests));
+
         _controller = new TransactionController(_mockService.Object);
+    }
+    private void LogTransaction(string request, string response)
+    {
+        string logMessage = $"📤 REQUEST:\n{request}\n\n📥 RESPONSE:\n{response}\n";
+        _logger.Info(logMessage);
+        _output.WriteLine(logMessage);
     }
 
     [Fact]
@@ -70,6 +86,12 @@ public class TransactionControllerTests
 
         _output.WriteLine("📥 RESPONSE:");
         _output.WriteLine(System.Text.Json.JsonSerializer.Serialize(responseBody, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+
+        string requestJson = System.Text.Json.JsonSerializer.Serialize(request, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+        string responseJson = System.Text.Json.JsonSerializer.Serialize(responseBody, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+
+        // Log transaction
+        LogTransaction(requestJson, responseJson);
 
         // Assert
         Assert.NotNull(response);
@@ -127,6 +149,12 @@ public class TransactionControllerTests
         _output.WriteLine("📥 RESPONSE:");
         _output.WriteLine(System.Text.Json.JsonSerializer.Serialize(responseBody, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
 
+        string requestJson = System.Text.Json.JsonSerializer.Serialize(request, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+        string responseJson = System.Text.Json.JsonSerializer.Serialize(responseBody, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+
+        // Log transaction
+        LogTransaction(requestJson, responseJson);
+
         // Assert
         Assert.NotNull(response);
         Assert.Equal(400, response.StatusCode);
@@ -145,7 +173,7 @@ public class TransactionControllerTests
     [InlineData(503, 40, 463)]       // Prime number > 500 → Extra 8% discount (rounded)
     [InlineData(905, 181, 724)]      // Ends in 5 & > 900 → Extra 10% discount (rounded)
     public void SubmitTransaction_ShouldApplyCorrectDiscounts(
-    long totalAmountMYR, long expectedDiscount, long expectedFinalAmount) // ✅ Use `long` for all params
+    long totalAmountMYR, long expectedDiscount, long expectedFinalAmount) // ✅ Use long for all params
     {
         // Arrange
         var request = new TransactionRequest
@@ -153,7 +181,7 @@ public class TransactionControllerTests
             PartnerKey = "FAKEGOOGLE",
             PartnerPassword = "RkFLRVBBU1NXT1JEMTIzNA==",
             PartnerRefNo = "FG-00001",
-            TotalAmount = totalAmountMYR, // ✅ Already `long`
+            TotalAmount = totalAmountMYR, // ✅ Already long
             Items = new List<ItemDetail>
         {
             new ItemDetail { PartnerItemRef = "i-00001", Name = "Item1", Qty = 1, UnitPrice = totalAmountMYR }
@@ -166,9 +194,9 @@ public class TransactionControllerTests
             .Returns(new TransactionResponse
             {
                 Result = 1,
-                TotalAmount = totalAmountMYR, // ✅ Already `long`
-                TotalDiscount = expectedDiscount, // ✅ Already `long`
-                FinalAmount = expectedFinalAmount, // ✅ Already `long`
+                TotalAmount = totalAmountMYR, // ✅ Already long
+                TotalDiscount = expectedDiscount, // ✅ Already long
+                FinalAmount = expectedFinalAmount, // ✅ Already long
                 ResultMessage = "Transaction Successful"
             });
 
@@ -183,6 +211,12 @@ public class TransactionControllerTests
 
         _output.WriteLine("📥 RESPONSE:");
         _output.WriteLine(System.Text.Json.JsonSerializer.Serialize(responseBody, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+
+        string requestJson = System.Text.Json.JsonSerializer.Serialize(request, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+        string responseJson = System.Text.Json.JsonSerializer.Serialize(responseBody, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+
+        // Log transaction
+        LogTransaction(requestJson, responseJson);
 
         // Assert
         Assert.NotNull(response);
@@ -258,6 +292,12 @@ public class TransactionControllerTests
         _output.WriteLine("📥 RESPONSE:");
         _output.WriteLine(System.Text.Json.JsonSerializer.Serialize(responseBody, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
 
+        string requestJson = System.Text.Json.JsonSerializer.Serialize(request, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+        string responseJson = System.Text.Json.JsonSerializer.Serialize(responseBody, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+
+        // Log transaction
+        LogTransaction(requestJson, responseJson);
+
         Assert.NotNull(response);
         Assert.Equal(400, response.StatusCode);
         Assert.NotNull(responseBody);
@@ -265,4 +305,3 @@ public class TransactionControllerTests
     }
 
 }
-

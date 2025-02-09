@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 using TransactionAPI.Models;
 using TransactionAPI.Services;
+using System.Text.Json;
+using log4net;
 
 namespace TransactionAPI.Controllers
 {
@@ -8,6 +11,7 @@ namespace TransactionAPI.Controllers
     [Route("api/transaction")]
     public class TransactionController : ControllerBase
     {
+        private static readonly ILog _logger = LogManager.GetLogger(typeof(TransactionController));
         private readonly ITransactionService _transactionService;
 
         public TransactionController(ITransactionService transactionService)
@@ -20,19 +24,26 @@ namespace TransactionAPI.Controllers
         {
             if (request == null)
             {
+                _logger.Error("Received null request.");
                 return BadRequest(new TransactionResponse { Result = 0, ResultMessage = "Invalid request." });
             }
 
+            // Log Request Body
+            var requestJson = JsonSerializer.Serialize(request, new JsonSerializerOptions { WriteIndented = true });
+            _logger.Info($"📤 REQUEST:\n{requestJson}");
+
             var response = _transactionService.ProcessTransaction(request);
+
+            // Log Response Body
+            var responseJson = JsonSerializer.Serialize(response, new JsonSerializerOptions { WriteIndented = true });
+            _logger.Info($"📥 RESPONSE:\n{responseJson}");
+
+            if (request == null)
+            {
+                return BadRequest(new TransactionResponse { Result = 0, ResultMessage = "Invalid request." });
+            }
+
             return response.Result == 1 ? Ok(response) : BadRequest(response);
-        }
-
-        private bool IsExpired(string timestamp)
-        {
-            if (!DateTime.TryParse(timestamp, out DateTime requestTime))
-                return true;
-
-            return Math.Abs((DateTime.UtcNow - requestTime).TotalSeconds) > 300;
         }
     }
 }
