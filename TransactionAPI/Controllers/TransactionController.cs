@@ -5,12 +5,15 @@ using TransactionAPI.Services;
 using System.Text.Json;
 using log4net;
 
+
 namespace TransactionAPI.Controllers
 {
     [ApiController]
     [Route("api/transaction")]
-    //docker start df04d53a2f8a
-    //docker stop df04d53a2f8a
+    //C: \Users\kendr\source\repos\TransactionAPI\TransactionAPI\Dockerfile
+    //8080:8080
+    //docker start 17b76a7daede
+    //docker stop 17b76a7daede
     //    {
     //    "PartnerKey": "FAKEGOOGLE",
     //    "PartnerPassword": "RkFLRVBBU1NXT1JEMTIzNA==",
