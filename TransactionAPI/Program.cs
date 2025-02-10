@@ -10,7 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Register services
 builder.Services.AddControllers();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
-
+builder.WebHost.UseUrls("http://0.0.0.0:8080");
 var app = builder.Build();
 
 app.UseAuthorization();

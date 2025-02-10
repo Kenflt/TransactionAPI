@@ -1,0 +1,44 @@
+# Ignore IDE and editor settings
+**/.classpath
+**/.project
+**/.settings
+**/.vs
+**/.vscode
+**/*.jfm
+
+# Ignore build outputs
+**/bin
+**/obj
+
+# Ignore dependency caches and package managers
+**/node_modules
+**/npm-debug.log
+
+# Ignore Docker-related files except essential ones
+**/.dockerignore
+**/docker-compose*
+!docker-compose.yml  # Allow the main compose file
+**/Dockerfile*
+!Dockerfile  # Keep the main Dockerfile
+
+# Ignore Git files but keep essential tracking
+**/.git
+!.git/HEAD
+!.git/config
+!.git/packed-refs
+!.git/refs/heads/**
+
+# Ignore Kubernetes, Azure Dev Spaces, and Helm-related files
+**/azds.yaml
+**/charts
+**/secrets.dev.yaml
+**/values.dev.yaml
+
+# Ignore project-specific temporary files
+**/*.*proj.user
+**/*.dbmdl
+**/.toolstarget
+
+# Keep documentation files
+!README.md
+!LICENSE

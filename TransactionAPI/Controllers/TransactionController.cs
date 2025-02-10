@@ -9,6 +9,28 @@ namespace TransactionAPI.Controllers
 {
     [ApiController]
     [Route("api/transaction")]
+    //docker start df04d53a2f8a
+    //docker stop df04d53a2f8a
+    //    {
+    //    "PartnerKey": "FAKEGOOGLE",
+    //    "PartnerPassword": "RkFLRVBBU1NXT1JEMTIzNA==",
+    //    "PartnerRefNo": "FG-00001",
+    //    "TotalAmount": 1000,
+    //    "Timestamp": "2025-02-09T12:00:00Z",
+    //    "Items": [
+    //        {
+    //            "PartnerItemRef": "i-00001",
+    //            "Name": "Item1",
+    //            "Qty": 1,
+    //            "UnitPrice": 1000
+    //        }
+    //    ],
+    //    "Sig": "validsignature"
+    //}
+
+    //using Postman http://localhost:8080/api/transaction/submit-transaction
+    //Header: Content-Type application/json
+
     public class TransactionController : ControllerBase
     {
         private static readonly ILog _logger = LogManager.GetLogger(typeof(TransactionController));
