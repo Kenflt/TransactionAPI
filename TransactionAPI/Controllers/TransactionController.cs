@@ -14,22 +14,28 @@ namespace TransactionAPI.Controllers
     //8080:8080
     //docker start 17b76a7daede
     //docker stop 17b76a7daede
-    //    {
-    //    "PartnerKey": "FAKEGOOGLE",
-    //    "PartnerPassword": "RkFLRVBBU1NXT1JEMTIzNA==",
-    //    "PartnerRefNo": "FG-00001",
-    //    "TotalAmount": 1000,
-    //    "Timestamp": "2025-02-09T12:00:00Z",
-    //    "Items": [
-    //        {
-    //            "PartnerItemRef": "i-00001",
-    //            "Name": "Item1",
-    //            "Qty": 1,
-    //            "UnitPrice": 1000
-    //        }
-    //    ],
-    //    "Sig": "validsignature"
-    //}
+//    {
+//  "partnerkey": "FAKEGOOGLE",
+//  "partnerrefno": "FG-00001",
+//  "partnerpassword": "RkFLRVBBU1NXT1JEMTIzNA==",
+//  "totalamount": 1000,
+//  "items": [
+//    {
+//      "partneritemref": "i-00001",
+//      "name": "Pen",
+//      "qty": 4,
+//      "unitprice": 200
+//    },
+//    {
+//    "partneritemref": "i-00002",
+//      "name": "Ruler",
+//      "qty": 2,
+//      "unitprice": 100
+//    }
+//  ],
+//  "timestamp": "2025-02-10T10:26:22.0000000Z",
+//  "sig": " MDE3ZTBkODg4ZDNhYzU0ZDBlZWRmNmU2NmUyOWRhZWU4Y2M1NzQ1OTIzZGRjYTc1ZGNjOTkwYzg2MWJlMDExMw=="
+//}
 
     //using Postman http://localhost:8080/api/transaction/submit-transaction
     //Header: Content-Type application/json
